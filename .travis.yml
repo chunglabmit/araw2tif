@@ -7,4 +7,4 @@ install:
   - pip install nose
 script:
   - nosetests tests
-  - araw2tif
+  - araw2tif --help
