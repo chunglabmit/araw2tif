@@ -10,12 +10,12 @@ from tsv.raw import raw_imsave
 from araw2tif.main import main, copy_one
 
 @contextlib.contextmanager
-def test_case(file_hierarchy, dest=None):
+def make_case(file_hierarchy, dest=None):
     """create a test case
 
     Usage:
 
-    with test_case(dict(foo={ "bar.raw": np.random.randint... })) as (src, dst):
+    with make_case(dict(foo={ "bar.raw": np.random.randint... })) as (src, dst):
          main(["--src", src, "--dest", dst])
 
          ... test things
@@ -58,7 +58,7 @@ class TestARaw2Tif(unittest.TestCase):
     def test_copy_one(self):
         r = np.random.RandomState(1)
         my_case = { "foo.raw": mkimg(r)}
-        with test_case(my_case) as (src, dest):
+        with make_case(my_case) as (src, dest):
             copy_one(os.path.join(src, "foo.raw"),
                      os.path.join(dest, "foo.tiff"),
                      compress=3)
@@ -69,7 +69,7 @@ class TestARaw2Tif(unittest.TestCase):
     def test_copy_one_after(self):
         r = np.random.RandomState(1)
         my_case = { "foo.raw": mkimg(r)}
-        with test_case(my_case) as (src, dest):
+        with make_case(my_case) as (src, dest):
             time.sleep(.1)  # sleep a tick.
             with open(os.path.join(dest, "foo.tiff"), "w") as fd:
                 fd.write("Huzzah!")
@@ -86,7 +86,7 @@ class TestARaw2Tif(unittest.TestCase):
         with open(os.path.join(dest, "foo.tiff"), "w") as fd:
             fd.write("Huzzah!")
         time.sleep(.1) # sleep a tick.
-        with test_case(my_case, dest=dest) as (src, dest):
+        with make_case(my_case, dest=dest) as (src, dest):
             copy_one(os.path.join(src, "foo.raw"),
                      os.path.join(dest, "foo.tiff"),
                      compress=3)
@@ -97,7 +97,7 @@ class TestARaw2Tif(unittest.TestCase):
     def test_one(self):
         r = np.random.RandomState(1)
         my_case = { "foo.raw": mkimg(r)}
-        with test_case(my_case) as (src, dest):
+        with make_case(my_case) as (src, dest):
             main(["--src", src,
                   "--dest", dest])
             dirlist = os.listdir(dest)
@@ -113,7 +113,7 @@ class TestARaw2Tif(unittest.TestCase):
                     "bar": { "bar.raw": mkimg(r),
                              "baz.raw": mkimg(r)}
                     }
-        with test_case(my_case) as (src, dest):
+        with make_case(my_case) as (src, dest):
             main(["--src", src,
                   "--dest", dest])
             dirlist = sorted(os.listdir(dest))
@@ -131,7 +131,7 @@ class TestARaw2Tif(unittest.TestCase):
     def test_timestamp_after(self):
         r = np.random.RandomState(1)
         my_case = { "foo.raw": mkimg(r)}
-        with test_case(my_case) as (src, dest):
+        with make_case(my_case) as (src, dest):
             time.sleep(.1)  # sleep a tick.
             with open(os.path.join(dest, "foo.tiff"), "w") as fd:
                 fd.write("Huzzah!")
@@ -147,7 +147,7 @@ class TestARaw2Tif(unittest.TestCase):
         with open(os.path.join(dest, "foo.tiff"), "w") as fd:
             fd.write("Huzzah!")
         time.sleep(.1) # sleep a tick.
-        with test_case(my_case, dest=dest) as (src, dest):
+        with make_case(my_case, dest=dest) as (src, dest):
             main(["--src", src,
                   "--dest", dest])
             np.testing.assert_array_equal(
