@@ -1,4 +1,6 @@
 # araw2tif
+[![Travis CI Status](https://travis-ci.org/chunglabmit/araw2tif.svg?branch=master)](https://travis-ci.org/chunglabmit/araw2tif)
+
 A utility for backing up .raw files to .tif
 
 This is a handy little utility for monitoring a file hierarchy of .raw files, 
