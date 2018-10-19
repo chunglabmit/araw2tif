@@ -153,3 +153,22 @@ class TestARaw2Tif(unittest.TestCase):
             np.testing.assert_array_equal(
                 my_case["foo.raw"],
                 tifffile.imread(os.path.join(dest, "foo.tiff")))
+
+    def test_src_ext(self):
+        r = np.random.RandomState(1)
+        my_case = { "foo.raw": mkimg(r), "bar.rah": mkimg(r)}
+        with make_case(my_case) as (src, dest):
+            main(["--src", src,
+                  "--dest", dest,
+                  "--src-ext", ".rah"])
+            self.assertListEqual(list(os.listdir(dest)), ["bar.tiff"])
+
+    def test_dest_ext(self):
+        r = np.random.RandomState(1)
+        my_case = { "foo.raw": mkimg(r)}
+        with make_case(my_case) as (src, dest):
+            main(["--src", src,
+                  "--dest", dest,
+                  "--dest-ext", ".tif"])
+            self.assertListEqual(list(os.listdir(dest)), ["foo.tif"])
+
