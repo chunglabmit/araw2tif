@@ -1,0 +1,3 @@
+https://github.com/chunglabmit/tsv/archive/master.zip
+tifffile
+tqdm
