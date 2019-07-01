@@ -2,6 +2,7 @@ import argparse
 import multiprocessing
 import os
 import tifffile
+import shutil
 import sys
 import tqdm
 from tsv.raw import raw_imread
@@ -38,6 +39,10 @@ def parse_args(args=sys.argv[1:]):
                         default=".tiff",
                         help="Extension to add to files in destination folder. "
                         "Default is \".tiff\"")
+    parser.add_argument("--copy-all",
+                        action="store_true",
+                        help="Copy all files in the directory tree, "
+                             "compressing .raw files as we go.")
     return parser.parse_args(args)
 
 def copy_one(src, dest, compress):
@@ -69,23 +74,33 @@ def main(args=sys.argv[1:]):
         dest_root = os.path.join(args.dest, rel_root)
         checked_dest_root = False
         for file in files:
+            src = os.path.join(root, file)
             if file.lower().endswith(args.src_ext):
                 if not checked_dest_root and not os.path.exists(dest_root):
                     os.makedirs(dest_root)
                     checked_dest_root = True
-                src = os.path.join(root, file)
                 dest = os.path.join(dest_root,
                                     file[:-len(args.src_ext)] + args.dest_ext)
-                to_do.append((src, dest))
+                to_do.append((copy_one, src, dest))
+            elif args.copy_all:
+                dest = os.path.join(dest_root, file)
+                to_do.append((shutil.copy, src, dest))
 
     futures = []
     with multiprocessing.Pool(args.n_cpus) as pool:
-        for src, dest in tqdm.tqdm(to_do,
+        for fn, src, dest in tqdm.tqdm(to_do,
                                    desc="Enqueueing work",
                                    disable=args.silent):
+            if fn == shutil.copy:
+                fn_args = (src, dest)
+            else:
+                fn_args = (src, dest, args.compress)
             futures.append(pool.apply_async(
-                copy_one, (src, dest, args.compress)))
+                fn, fn_args))
         for future in tqdm.tqdm(futures,
                                 desc="Working",
                                 disable=args.silent):
             future.get()
+
+if __name__ == "__main__":
+    main()
