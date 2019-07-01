@@ -83,6 +83,9 @@ def main(args=sys.argv[1:]):
                                     file[:-len(args.src_ext)] + args.dest_ext)
                 to_do.append((copy_one, src, dest))
             elif args.copy_all:
+                if not checked_dest_root and not os.path.exists(dest_root):
+                    os.makedirs(dest_root)
+                    checked_dest_root = True
                 dest = os.path.join(dest_root, file)
                 to_do.append((shutil.copy, src, dest))
 
