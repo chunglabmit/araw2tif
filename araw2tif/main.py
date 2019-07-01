@@ -6,6 +6,7 @@ import shutil
 import sys
 import tqdm
 from tsv.raw import raw_imread
+import traceback
 
 def parse_args(args=sys.argv[1:]):
     """Parse the program arguments
@@ -63,6 +64,52 @@ def copy_one(src, dest, compress):
     tifffile.imsave(dest, img, compress=compress)
 
 
+has_printed_exception = False
+
+
+def copy_tiff(src, dest, compress):
+    """Copy a TIFF file, possibly compressing it
+
+    :param src: the path to a .tiff file
+    :param dest: the destination
+    :param compress: compression level
+    """
+    global has_printed_exception
+    if os.path.exists(dest):
+        src_ts = os.stat(src).st_mtime
+        dest_ts = os.stat(dest).st_mtime
+        if dest_ts >= src_ts:
+            return
+    try:
+        tf = tifffile.TiffFile(src)
+        if tf.series[0].pages[0].compression == \
+                tifffile.tifffile.TIFF.COMPRESSION.NONE:
+            img = tf.asarray()
+            if os.path.exists(dest):
+                os.unlink(dest)
+            tifffile.imsave(dest, img, compress=compress)
+        else:
+            copy_file(src, dest, compress)
+    except:
+        if not has_printed_exception:
+            print("Possibly corrupted TIF: %s" % src)
+            traceback.print_exc()
+            has_printed_exception = True
+        copy_file(src, dest, compress)
+
+
+def copy_file(src, dest, compress):
+    """Copy any file"""
+    if os.path.exists(dest):
+        src_ts = os.stat(src).st_mtime
+        dest_ts = os.stat(dest).st_mtime
+        if dest_ts >= src_ts:
+            return
+    if os.path.exists(dest):
+        os.unlink(dest)
+    shutil.copy(src, dest)
+
+
 def main(args=sys.argv[1:]):
     args = parse_args(args)
     to_do = []
@@ -87,7 +134,10 @@ def main(args=sys.argv[1:]):
                     os.makedirs(dest_root)
                     checked_dest_root = True
                 dest = os.path.join(dest_root, file)
-                to_do.append((shutil.copy, src, dest))
+                if src.endswith(".tif") or src.endswith(".tiff"):
+                    to_do.append((copy_tiff, src, dest))
+                else:
+                    to_do.append((copy_file, src, dest))
 
     futures = []
     with multiprocessing.Pool(args.n_cpus) as pool:
@@ -104,6 +154,7 @@ def main(args=sys.argv[1:]):
                                 desc="Working",
                                 disable=args.silent):
             future.get()
+
 
 if __name__ == "__main__":
     main()
