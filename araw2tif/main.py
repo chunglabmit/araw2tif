@@ -62,6 +62,7 @@ def copy_one(src, dest, compress):
     if os.path.exists(dest):
         os.unlink(dest)
     tifffile.imsave(dest, img, compress=compress)
+    shutil.copystat(src, dest)
 
 
 has_printed_exception = False
@@ -88,6 +89,7 @@ def copy_tiff(src, dest, compress):
             if os.path.exists(dest):
                 os.unlink(dest)
             tifffile.imsave(dest, img, compress=compress)
+            shutil.copystat(src, dest)
         else:
             copy_file(src, dest, compress)
     except:
@@ -107,7 +109,8 @@ def copy_file(src, dest, compress):
             return
     if os.path.exists(dest):
         os.unlink(dest)
-    shutil.copy(src, dest)
+    shutil.copyfile(src, dest)
+    shutil.copystat(src, dest)
 
 
 def main(args=sys.argv[1:]):
