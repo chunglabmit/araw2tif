@@ -107,7 +107,9 @@ def copy_file(src, dest, compress):
             return
     if os.path.exists(dest):
         os.unlink(dest)
-    shutil.copyfile(src, dest)
+    with open(src, "rb") as fdsrc:
+        with open(dest, "wb") as fddest:
+            shutil.copyfileobj(fdsrc, fddest)
 
 
 def main(args=sys.argv[1:]):
@@ -144,16 +146,19 @@ def main(args=sys.argv[1:]):
         for fn, src, dest in tqdm.tqdm(to_do,
                                    desc="Enqueueing work",
                                    disable=args.silent):
+            name = os.path.split(src)[1]
             if fn == shutil.copy:
                 fn_args = (src, dest)
             else:
                 fn_args = (src, dest, args.compress)
-            futures.append(pool.apply_async(
-                fn, fn_args))
-        for future in tqdm.tqdm(futures,
-                                desc="Working",
-                                disable=args.silent):
-            future.get()
+            futures.append((pool.apply_async(
+                fn, fn_args), name))
+        with tqdm.tqdm(futures,
+                       desc="Working",
+                       disable=args.silent) as pbar:
+            for future, name in pbar:
+                pbar.set_description("Copying %s" % name)
+                future.get()
 
 
 if __name__ == "__main__":
